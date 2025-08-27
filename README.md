@@ -1,9 +1,6 @@
 # TreeTag
 
-**TreeTag** is a fast, interpretable, and recursive marker-based cell annotation method for single-cell RNA-seq data.
-
-It uses known marker sets to score cells and iteratively splits them based on expression patterns, producing robust subtype annotations with minimal prior assumptions.
-
+***TreeTag*** is a lightweight Python package that automatically annotates single-cell RNA-seq data. It reads two editable YAML files: one lays out the hierarchy of cell types, and the other lists positive and negative marker genes. TreeTag promotes quick, interactive adjustment of marker sets and ontologies by keeping marker rules human-readable, and performing near-instant reannotation. Marker pruning avoids misleading assignments from dataset- or batch-specific markers, while smoothing helps overcome inherent scRNA-seq sparsity by integrating consistent signals from a PCA-driven neighborhood embedding.
 ---
 
 ## Features
