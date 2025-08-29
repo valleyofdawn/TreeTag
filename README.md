@@ -92,7 +92,7 @@ root:
     DC:
 ```
 
-**`!` note:** Any key starting with `_` is treated as **disabled**; the cell-type and its entire subtree are skipped.
+**`!` note:** Any key starting with "_" is treated as **disabled**; the cell-type and its entire subtree are skipped.
 
 #### Markers YAML
 
