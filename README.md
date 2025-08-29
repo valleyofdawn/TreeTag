@@ -72,7 +72,7 @@ print(adata.obs["TreeTag"].value_counts())
 sc.pl.umap(adata, color="TreeTag")
 ```
 
-# YAML File Formats
+## YAML File Formats
 
 #### Ontology YAML
 
@@ -82,7 +82,7 @@ root:
     CD4_T:
       Treg:
       Th:
-      !Tfh:
+      _Tfh:
     CD8_T:
   B:
     Naive_B:
@@ -92,7 +92,7 @@ root:
     DC:
 ```
 
-**`!` note:** Any key starting with `!` is treated as **disabled**; the node and its entire subtree are skipped.
+**`!` note:** Any key starting with `_` is treated as **disabled**; the cell-type and its entire subtree are skipped.
 
 #### Markers YAML
 
