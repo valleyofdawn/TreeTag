@@ -102,3 +102,128 @@ CD4_T: [CD4, TRAT1, ICOS, GPR183, CD40LG, IL6ST, -CD8A, -CD8B]
 Treg: [FOXP3, RTKN2, IL2RA, IKZF2, CTLA4, TNFRSF18, TIGIT, -CD40LG]
 ```
 **`!` note:** At least 2 positive markers are needed per cell type. Negative markers start with "-" and are not obligatory. 
+
+## Function reference
+
+## `TreeTag`
+
+**What it does:** Hierarchical cell‑type tagging using positive/negative markers.
+
+**Signature:**
+
+```python
+TreeTag(
+    adata,
+    tree_yaml: str,
+    markers_yaml: str,
+    root: str,
+    min_marker_count: int = 2,
+    verbose: bool = False,
+    smoothing: bool = True,
+    majority_vote: bool = True,
+    save_scores: bool = False,
+    min_score: float = 0.0,
+    min_pruning_fc: float = 1.5,
+) -> None
+```
+
+**Writes:** `adata.obs["TreeTag"]`; if `save_scores=True`, also `<node>_score` columns.
+
+**Requires (if enabled):** neighbors in `adata.obsp` for `smoothing`/`majority_vote`.
+
+**Common errors (and fixes):**
+
+* *No neighbor graph:* run `sc.pp.neighbors(adata, use_rep="X_pca")` **or** set `smoothing=False, majority_vote=False`.
+* *No subtree markers found:* check gene naming (symbols vs Ensembl), root, and `.raw` usage.
+* *Neighbor shape mismatch:* rebuild neighbors **after** any cell filtering.
+
+---
+
+### `init_ontology`
+
+**What it does:** Loads ontology + markers, builds the graph, normalizes marker dicts. If adata is provided, omits missing markers.
+
+**Signature:**
+
+```python
+G = init_ontology(tree_yaml: str, markers_yaml: str, root: str, adata=None,)
+```
+
+**Returns:**
+
+* `G`: graph of the ontology (node names in `G.vs["name"]`), with poaitive and negative marker attributes per node.
+
+---
+
+### `markers`
+
+**What it does:** Returns marker genes for a node (optionally filtered to genes present in `adata`).
+
+**Signature:**
+
+```python
+markers(
+    cell_type: str,
+    sign: str = "pos",            # "pos" or "neg"
+    markers_yaml: str = "markers.yaml",
+    tree_yaml: str = "ontology.yaml",
+    adata=None,                    # optional filter to adata.var_names/raw.var_names
+) -> list[str]
+```
+
+---
+
+### `subscores`
+
+**What it does:** Lists existing `<node>_score` columns under a root (useful after `TreeTag(save_scores=True)`).
+
+**Signature:**
+
+```python
+subscores(
+    root_cell: str,
+    adata,
+    markers_yaml: str,
+    tree_yaml: str,
+) -> list[str]
+```
+
+---
+
+### `find_doublets`
+
+**What it does:** Flags likely doublets **after scoring** using per‑node score patterns (e.g., strong scores for incompatible lineages).
+
+**Signature (minimal):**
+
+```python
+find_doublets(
+    adata,
+    threshold: float = 0.25,   # heuristic overlap metric; implementation‑specific
+    write: bool = True,
+    key: str = "doublet_like",
+) -> "pd.Series[bool] | np.ndarray[bool]"
+```
+
+**Writes (if `write=True`):** `adata.obs["doublet_like"]` boolean mask.
+
+---
+
+### `plot_tree`
+
+**What it does:** Renders the ontology tree (optionally overlaying counts/assignments).
+
+**Signature (typical):**
+
+```python
+plot_tree(
+    tree_yaml: str | None = None,
+    markers_yaml: str | None = None,
+    root: str | None = None,
+    G=None,                      # alternatively pass a prebuilt graph
+    adata=None,                  # optional: color by counts/labels
+    ax=None,
+    layout: str = "rt",         # e.g., top‑down
+) -> "matplotlib.axes.Axes"
+```
+
