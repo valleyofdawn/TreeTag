@@ -113,19 +113,17 @@ Treg: [FOXP3, RTKN2, IL2RA, IKZF2, CTLA4, TNFRSF18, TIGIT, -CD40LG]
 
 ```python
 TreeTag(
-    adata,
-    tree_yaml: str,
-    markers_yaml: str,
-    root: str,
-    min_marker_count: int = 2,
-    verbose: bool = False,
-    smoothing: bool = True,
-    majority_vote: bool = True,
-    save_scores: bool = False,
-    min_score: float = 0.0,
-    min_pruning_fc: float = 1.5,
-) -> None
-```
+    adata, # The AnnData object to analyze
+    tree_yaml: str, # The YAML file describing the cell ontology
+    markers_yaml: str, # The YAML file with the positive and negative markers for each cell in tree_yaml
+    root: str = 'root', # start node in the ontology (e.g., if your dataset only contains T and NK cells then root="T_NK")
+    min_marker_count: int = 2, # the minimum number of positive markers required for a cell type to be scored
+    verbose: bool = False, # print per-split diagnostics and pruning details
+    smoothing: bool = True, # KNN score smoothing using neighbors graph in adata.obsp
+    majority_vote: bool = True, # one-pass label consensus using the same neighbors graph
+    save_scores: bool = False, # write <cell type>_score columns to adata.obs
+    min_score: float = 0.0, # gate final labels below this score to "unknown" (0 disables)
+    min_pruning_fc: float = 1.5 # prune +markers per child if FC vs avg(other siblings) < this
 
 **Writes:** `adata.obs["TreeTag"]`; if `save_scores=True`, also `<node>_score` columns.
 
