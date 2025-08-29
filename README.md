@@ -24,7 +24,6 @@ TreeTag is a lightweight Python package that automatically annotates single-cell
 
 - Detects likely doublets after scoring, using per‑node scores to flag candidates for review/removal **(find_doublets)**.
 
-
 ---
 
 ## Installation
@@ -40,4 +39,38 @@ Verify intallation
 ```bash
 python -c "import treetag, sys; print('TreeTag', treetag.__version__)"
 ```
+---
+## Quickstart
+
+```python
+import scanpy as sc
+from treetag import TreeTag
+
+# 1) Load data (PBMCs if you want it to work wuth the example YAML files)
+adata = sc.read_h5ad("my_data.h5ad")
+
+# 2) Prepare neighbors (required for smoothing / majority_vote)
+sc.pp.pca(adata)
+sc.pp.neighbors(adata, use_rep="X_pca")
+
+# 3) Import example YAML files
+data_dir = files("treetag.data")           # package submodule with YAMLs
+tree_yaml = data_dir / "PBMC.yaml"
+markers_yaml = data_dir / "PBMC_markers.yaml"
+
+# 4) Run TreeTag
+TreeTag(
+    adata,
+    tree_yaml="PBMC.yaml",     # cell-type hierarchy
+    markers_yaml="PBMC_markers.yaml",   # positive/negative markers
+    root="PBMC",                   # any node in your ontology
+    save_scores=True                # optional: write per-node scores
+)
+
+# 5) Inspect results
+print(adata.obs["TreeTag"].value_counts())
+sc.pl.umap(adata, color="TreeTag")
+```
+
+
 
