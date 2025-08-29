@@ -72,5 +72,33 @@ print(adata.obs["TreeTag"].value_counts())
 sc.pl.umap(adata, color="TreeTag")
 ```
 
+# YAML File Formats
 
+#### Ontology YAML
 
+```yaml
+root:
+  T_NK:
+    CD4_T:
+      Treg:
+      Th:
+      !Tfh:
+    CD8_T:
+  B:
+    Naive_B:
+    Memory_B:
+  Myeloid:
+    Mono:
+    DC:
+```
+
+**`!` note:** Any key starting with `!` is treated as **disabled**; the node and its entire subtree are skipped.
+
+#### Markers YAML
+
+```yaml
+T_NK: [CD2, IL32, CD7, CD247, CD3E, LCK, IFITM1, GIMAP7, -MS4A1]
+CD4_T: [CD4, TRAT1, ICOS, GPR183, CD40LG, IL6ST, -CD8A, -CD8B]
+Treg: [FOXP3, RTKN2, IL2RA, IKZF2, CTLA4, TNFRSF18, TIGIT, -CD40LG]
+```
+**`!` note:** At least 2 positive markers are needed per cell type. Negative markers start with "-" and are not obligatory. 
