@@ -28,9 +28,16 @@ TreeTag is a lightweight Python package that automatically annotates single-cell
 ---
 
 ## Installation
-
-Coming soon as a pip-installable package. For now, clone the repository:
-
+From PyPI (recommended)
 ```bash
-git clone https://github.com/yourusername/treetag.git
-cd treetag
+pip install treetag
+```
+Upgrade
+```bash
+pip install --upgrade treetag
+```
+Verify intallation
+```bash
+python -c "import treetag, sys; print('TreeTag', treetag.__version__)"
+```
+
