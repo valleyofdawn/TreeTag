@@ -134,17 +134,22 @@ TreeTag(
 * *No neighbor graph:* run `sc.pp.neighbors(adata, use_rep="X_pca")` **or** set `smoothing=False, majority_vote=False`.
 * *No subtree markers found:* check gene naming (symbols vs Ensembl), root, and `.raw` usage.
 * *Neighbor shape mismatch:* rebuild neighbors **after** any cell filtering.
-
+```
 ---
 
-### `init_ontology`
+### `init_tree`
 
 **What it does:** Loads ontology + markers, builds the graph, normalizes marker dicts. If adata is provided, omits missing markers.
 
 **Signature:**
 
 ```python
-G = init_ontology(tree_yaml: str, markers_yaml: str, root: str, adata=None,)
+def init_tree(
+    tree_yaml: str,              # Path to ontology tree YAML (nested dict of nodes)
+    markers_yaml: str | None = None,  # Optional path to markers YAML; if None, skip marker loading
+    root: str = "root",          # Name of the node to treat as subtree root
+    adata=None,                  # Optional AnnData; if given, markers are filtered to its genes
+):
 ```
 
 **Returns:**
