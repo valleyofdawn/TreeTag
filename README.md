@@ -232,3 +232,4 @@ plot_tree(
 ---
 ##  Results Gallery
 ![UMAP of PBMCs](docs/img/UMAP.png)
+![Ontology of PBMCs](docs/img/Tree.png)
