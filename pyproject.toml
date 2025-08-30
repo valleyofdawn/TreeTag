@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "treetag"
+version = "0.1.0"
+description = "Hierarchical cell-type tagging with YAML ontologies and markers."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Guy"}]
+dependencies = [
+  "pyyaml>=6",
+  "python-igraph>=0.11"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
