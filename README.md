@@ -229,4 +229,6 @@ plot_tree(
     layout: str = "rt",         # e.g., top‑down
 ) -> "matplotlib.axes.Axes"
 ```
-
+---
+##  Results Gallery
+![Tree Plot](docs/img/UMAP.png)
