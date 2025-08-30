@@ -231,5 +231,8 @@ plot_tree(
 ```
 ---
 ##  Results Gallery
+### A UMAP of PBMC cell types produced with TreeTag
 ![UMAP of PBMCs](docs/img/UMAP.png)
+---
+### Visualization of the cell ontology producing the above UMAP
 ![Ontology of PBMCs](docs/img/Tree.png)
