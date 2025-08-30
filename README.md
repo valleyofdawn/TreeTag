@@ -231,4 +231,4 @@ plot_tree(
 ```
 ---
 ##  Results Gallery
-![Tree Plot](docs/img/UMAP.png)
+![UMAP of PBMCs](docs/img/UMAP.png)
