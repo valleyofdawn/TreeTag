@@ -12,7 +12,10 @@ license = {text = "MIT"}
 authors = [{name = "Guy"}]
 dependencies = [
   "pyyaml>=6",
-  "python-igraph>=0.11"
+  "python-igraph>=0.11",
+  "numpy>=1.26",
+  "pandas>=2.0",
+  "scipy>=1.11"
 ]
 
 [tool.setuptools.packages.find]
