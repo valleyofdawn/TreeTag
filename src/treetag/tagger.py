@@ -248,7 +248,19 @@ def TreeTag(
             elif "connectivities" in adata.obsp:
                 C_raw = adata.obsp["connectivities"]; src = "connectivities"
             else:
-                raise ValueError("smoothing/majority_vote requires a neighbor graph. Run sc.pp.neighbors(...) or disable smoothing/MV.")
+                # Build neighbors via Scanpy if missing
+                try:
+                    import scanpy as sc
+                except ImportError as e:
+                    raise RuntimeError(
+                        "smoothing/majority_vote requires a neighbor graph, and scanpy is missing. "
+                        "Install it or set smoothing=False and majority_vote=False."
+                    ) from e
+                # Use whatever you prefer; X_pca if present, else .X
+                use_rep = "X_pca" if "X_pca" in adata.obsm_keys() else None
+                sc.pp.neighbors(adata, n_neighbors=15, use_rep=use_rep)
+                src = adata.uns.get("neighbors", {}).get("connectivities_key", "connectivities")
+                C_raw = adata.obsp[src]
             nb_token = ("neighbors_v1", src, C_raw.shape, int(getattr(C_raw, "nnz", C_raw.size)))
             nb_entry = cache.get("neighbors_entry")
             if nb_entry and nb_entry.get("token") == nb_token:
