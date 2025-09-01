@@ -27,9 +27,8 @@ def TreeTag(
     Inputs
     - adata: AnnData with gene expression in .X (or .raw.X if present). If smoothing/majority_vote=True,
       adata must also contain a neighbor connectivities matrix in .obsp (e.g. 'connectivities').
-    - tree_yaml, markers_yaml: YAML files consumed by init_tree(...), which attaches per-node marker lists.
     - root: **start node** for tagging (can be any existing vertex name in the tree).
-
+    - tree_yaml, markers_yaml: **Explicit file paths** to your YAMLs (no defaults).
     Outputs / side effects
     - Writes categorical labels to adata.obs["TreeTag"].
     - If save_scores=True, writes per-child score columns named "<child>_score" for splits that were scored.
@@ -45,6 +44,13 @@ def TreeTag(
     from scipy.sparse import csc_matrix, csr_matrix, coo_matrix, issparse
 
     # Utility helpers used throughout TreeTag.
+    from pathlib import Path
+
+    def _must_exist(p: str | Path, what: str) -> str:
+        if not isinstance(p, (str, Path)) or not Path(p).exists():
+            raise FileNotFoundError(f"{what} not found: {p!r}. Pass a real path; defaults (None) are not supported.")
+        return str(p)
+
     def _ensembl_fraction(names, sample=200):
         import numpy as np
         idx = np.random.default_rng(0).choice(len(names), size=min(sample, len(names)), replace=False)
@@ -118,7 +124,11 @@ def TreeTag(
                 _log(f"   - {gene}: {vals_fmt} | other_avg={other_str}, child={child_str}, FC(child/others)={fc_dbg:.3f}")
         except Exception as _e:
             _log(f"[Prune:DETAIL] (failed to print details: {_e})")
-
+    
+    # Enforce explicit YAMLs
+    tree_yaml   = _must_exist(tree_yaml,   "tree_yaml")
+    markers_yaml = _must_exist(markers_yaml, "markers_yaml")
+    
     # Session RAM cache: per-AnnData buckets keyed by id(adata), auto-cleaned when the AnnData is garbage-collected.
     global _TT_CACHE, _TT_CACHE_FINALIZERS
     try:
