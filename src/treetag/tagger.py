@@ -12,7 +12,7 @@ def TreeTag(
     majority_vote: bool = True,    # optional single-pass label MV (excludes self)
     save_scores: bool = False,     # persist per-split cell-type scores as "<child>_score"
     min_score: float = 0.0,        # gate final labels below this raw score as "unknown"
-    min_pruning_fc: float = 2.0    # minimum FC vs avg(other siblings) for +markers; set ≤1 to disable
+    min_pruning_fc: float = 1.5    # minimum FC vs avg(other siblings) for +markers; set ≤1 to disable
 ):
     """
     TreeTag: hierarchical cell-type annotation using marker genes on a directed tree.
@@ -45,6 +45,12 @@ def TreeTag(
     from scipy.sparse import csc_matrix, csr_matrix, coo_matrix, issparse
 
     # Utility helpers used throughout TreeTag.
+    def _ensembl_fraction(names, sample=200):
+        import numpy as np
+        idx = np.random.default_rng(0).choice(len(names), size=min(sample, len(names)), replace=False)
+        s = [str(names[i]) for i in idx]
+        return sum(x.startswith(("ENSG","ENSMUSG","ENSDARG","ENS")) for x in s) / max(1, len(s))
+
     def _row_normalize(M):
         """Row-stochastic normalization for CSR matrices; safe on zero rows."""
         M = M.tocsr()
@@ -187,6 +193,7 @@ def TreeTag(
         Return CSC (float32) of subtree marker union, scaled per-column by nonzero max.
         Cached in RAM via tokens; never persisted.
         """
+        nonlocal var_names
         token = ("X_csc_v3",
                  int(adata.n_obs),
                  bool(use_raw),
@@ -201,27 +208,28 @@ def TreeTag(
         col_map = {g: i for i, g in enumerate(var_names)}
         cols = [col_map[g] for g in marker_union if g in col_map]
         if not cols:
-                    col_map = {g: i for i, g in enumerate(var_names)}
-        cols = [col_map[g] for g in marker_union if g in col_map]
-        if not cols:
-            _log("[TreeTag] No marker overlap with current gene IDs; trying auto-convert to symbols...")
-            try:
-                info = convert(adata)  # uses var['feature_name']/['gene_symbols']/['SYMBOL'] if present
-                # refresh gene list after conversion
+            frac = _ensembl_fraction(var_names)
+            if frac >= 0.5:
+                _log("[TreeTag] No marker overlap; IDs look like Ensembl (>=50%). Trying auto-convert…")
+                info = convert(adata, prefer_var_cols=("feature_name","gene_symbols","SYMBOL"))
                 var_names = (adata.raw.var_names if use_raw else adata.var_names)
                 col_map = {g: i for i, g in enumerate(var_names)}
                 cols = [col_map[g] for g in marker_union if g in col_map]
                 if not cols:
-                    raise RuntimeError("After auto-conversion, still zero overlap between markers and genes.")
-                _log(f"[TreeTag] Auto-converted genes (used={info.get('used')}, changed={info.get('changed')}).")
-            except Exception as e:
+                    raise RuntimeError("After Ensembl→symbol conversion, still zero overlap. Check your marker YAML.")
+                _log(f"[TreeTag] Auto-converted (used={info.get('used')}, changed={info.get('changed')}).")
+            else:
+                # Looks like symbols already → don’t convert; this is a marker mismatch problem
                 raise RuntimeError(
-                    "No marker genes overlap your dataset and auto-conversion failed.\n"
-                    "If your IDs are Ensembl, install gprofiler-official and convert first:\n"
-                    "    pip install gprofiler-official\n"
-                    "Then run: from treetag import convert; convert(adata)\n"
-                    f"Details: {e}"
+                    "No overlap between marker genes and dataset, and gene IDs look like symbols "
+                    "(<50% Ensembl). Likely a marker naming mismatch.\n"
+                    "Tip: print a few var names and compare to your YAML.\n"
+                    "Example:\n"
+                    "  genes = set((adata.raw.var_names if adata.raw is not None else adata.var_names))\n"
+                    "  # check a few markers\n"
+                    "  print({g for g in ['MS4A1','CD79A','CD3D','CD3E','NKG7','GNLY'] if g in genes})"
                 )
+
 
         Xsrc = (adata.raw.X if use_raw else adata.X)
         t0 = time.perf_counter()

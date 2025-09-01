@@ -43,14 +43,8 @@ def find_doublets(
     ---------------------------
     adata.obs['doublet_score'] : float
         (eps + M2) / (eps + M1), in (0, 1]; higher ⇒ more doublet-like.
-    adata.obs['doublet_top1']  : category
-        Winning family (argmax).
-    adata.obs['doublet_top2']  : category
+    adata.obs['doublet_partner']  : category
         Runner-up family.
-    adata.obs['doublet_M1']    : float
-        Winning score.
-    adata.obs['doublet_M2']    : float
-        Runner-up score.
 
     Returns
     -------
@@ -92,9 +86,6 @@ def find_doublets(
 
     if write_cols:
         adata.obs["doublet_score"] = ratio
-        adata.obs["doublet_top1"]  = pd.Categorical(top1, categories=families)
-        adata.obs["doublet_top2"]  = pd.Categorical(top2, categories=families)
-        adata.obs["doublet_M1"]    = M1
-        adata.obs["doublet_M2"]    = M2
+        adata.obs["doublet_partner"]  = pd.Categorical(top2, categories=families)
 
     return {"n_cells": int(n_cells), "families": families, "root": root}

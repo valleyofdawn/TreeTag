@@ -12,7 +12,7 @@ def init_tree(
         if src is None:
             if default_name is None:
                 return {}
-            res = files("treetag.data").joinpath(default_name)
+            res = files("treetag").joinpath("data", default_name)
             with res.open("r", encoding="utf-8") as f:
                 return yaml.safe_load(f) or {}
         if hasattr(src, "open"):  # importlib.resources Traversable
