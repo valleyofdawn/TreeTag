@@ -2,13 +2,13 @@ from typing import Optional, Union, Sequence, Tuple
 import textwrap
 import matplotlib.pyplot as plt
 import igraph as ig
-
+ 
 def plot_tree(
     G: "ig.Graph",
     root: Optional[str] = None,
-    vertex_size: int = 20,
-    vertex_label_size: int = 10,
-    bbox: Tuple[int, int] = (800, 800),   # pixels
+    vertex_size: int = 50,
+    vertex_label_size: int = 9,
+    bbox: Tuple[int, int] = (1400, 800),   # pixels
     margin: int = 50,
     palette: Optional[Union[dict, Sequence[str]]] = None,
     wrap_width: int = 6,
