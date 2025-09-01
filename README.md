@@ -1,6 +1,6 @@
 # TreeTag
 
-TreeTag is a lightweight Python package that automatically annotates single-cell RNA-seq data. It reads two editable YAML files: one lays out the hierarchy of cell types, and the other lists positive and negative marker genes. TreeTag promotes quick, interactive adjustment of marker sets and ontologies by keeping marker rules human-readable, and performing near-instant reannotation. Marker pruning avoids misleading assignments from dataset- or batch-specific markers, while smoothing helps overcome inherent scRNA-seq sparsity by integrating consistent signals from a PCA-driven neighborhood embedding.
+TreeTag is a lightweight Python package that automatically annotates single-cell RNA-seq data. It reads two editable YAML files: one lays out the hierarchy of cell types, and the other lists positive and negative marker genes. TreeTag promotes quick, interactive adjustment of marker sets and ontologies by keeping marker rules human-readable, and performing near-instant re-annotation. Marker pruning avoids misleading assignments from dataset- or batch-specific markers, while smoothing helps overcome inherent scRNA-seq sparsity by integrating consistent signals from a PCA-driven neighborhood embedding.
 
 ---
 
@@ -35,41 +35,43 @@ Upgrade
 ```bash
 pip install --upgrade treetag
 ```
-Verify intallation
+Verify installation
 ```bash
 python -c "import treetag, sys; print('TreeTag', treetag.__version__)"
 ```
 ---
 ## Quickstart
-
 ```python
 import scanpy as sc
-from treetag import TreeTag
+import treetag as tt
 
-# 1) Load data (PBMCs if you want it to work wuth the example YAML files)
+# 1) Load data (PBMC works best with the included examples)
 adata = sc.read_h5ad("my_data.h5ad")
 
-# 2) Prepare neighbors (required for smoothing / majority_vote)
+# 2) (Recommended) Harmonize gene names
+tt.convert(adata, prefer_var_cols=("feature_name"))
+
+# 3) Neighbors (needed only if smoothing/majority_vote=True)
 sc.pp.pca(adata)
 sc.pp.neighbors(adata, use_rep="X_pca")
 
-# 3) Import example YAML files
-data_dir = files("treetag.data")           # package submodule with YAMLs
-tree_yaml = data_dir / "PBMC.yaml"
-markers_yaml = data_dir / "PBMC_markers.yaml"
+# 4) Copy example YAMLs to a local folder so you can edit them
+tree_yaml, markers_yaml = tt.copy_example_yaml(dest="data")  # returns paths
 
-# 4) Run TreeTag
-TreeTag(
+# 5) Run TreeTag (explicit YAML paths; no defaults)
+tt.TreeTag(
     adata,
-    tree_yaml="PBMC.yaml",     # cell-type hierarchy
-    markers_yaml="PBMC_markers.yaml",   # positive/negative markers
-    root="PBMC",                   # any node in your ontology
-    save_scores=True                # optional: write per-node scores
+    tree_yaml=tree_yaml,                 # e.g., data/PBMC_tree.yaml
+    markers_yaml=markers_yaml,           # e.g., data/PBMC_markers.yaml
+    root="root",
+    smoothing=True,
+    majority_vote=True,
+    save_scores=True,
 )
 
-# 5) Inspect results
+# 6) Inspect results
 print(adata.obs["TreeTag"].value_counts())
-sc.pl.umap(adata, color="TreeTag")
+sc.pl.umap(adata, color="TreeTag", size=8)
 ```
 
 ## YAML File Formats
