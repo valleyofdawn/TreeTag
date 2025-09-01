@@ -1,5 +1,5 @@
 __all__ = ["init_tree", "markers", "subscores", "find_doublets", "TreeTag",
-"plot_tree",    "convert"]
+"plot_tree",  "convert"]
 __version__ = "0.1.0"
 
 from .tree import init_tree
