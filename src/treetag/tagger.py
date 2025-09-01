@@ -1,4 +1,5 @@
 from .tree import init_tree
+from .convert import convert
 
 def TreeTag(
     adata,
@@ -200,9 +201,28 @@ def TreeTag(
         col_map = {g: i for i, g in enumerate(var_names)}
         cols = [col_map[g] for g in marker_union if g in col_map]
         if not cols:
-            raise ValueError(f"No markers were found in your adata dataset for root='{root}'. "
-        "Fix: ensure your dataset uses the same gene naming as the data (typically gene symbols), "
-        "and verify the selected root has markers. If your genes live in .raw, make sure adata.raw is set.")
+                    col_map = {g: i for i, g in enumerate(var_names)}
+        cols = [col_map[g] for g in marker_union if g in col_map]
+        if not cols:
+            _log("[TreeTag] No marker overlap with current gene IDs; trying auto-convert to symbols...")
+            try:
+                info = convert(adata)  # uses var['feature_name']/['gene_symbols']/['SYMBOL'] if present
+                # refresh gene list after conversion
+                var_names = (adata.raw.var_names if use_raw else adata.var_names)
+                col_map = {g: i for i, g in enumerate(var_names)}
+                cols = [col_map[g] for g in marker_union if g in col_map]
+                if not cols:
+                    raise RuntimeError("After auto-conversion, still zero overlap between markers and genes.")
+                _log(f"[TreeTag] Auto-converted genes (used={info.get('used')}, changed={info.get('changed')}).")
+            except Exception as e:
+                raise RuntimeError(
+                    "No marker genes overlap your dataset and auto-conversion failed.\n"
+                    "If your IDs are Ensembl, install gprofiler-official and convert first:\n"
+                    "    pip install gprofiler-official\n"
+                    "Then run: from treetag import convert; convert(adata)\n"
+                    f"Details: {e}"
+                )
+
         Xsrc = (adata.raw.X if use_raw else adata.X)
         t0 = time.perf_counter()
         X_mark = Xsrc[:, cols]

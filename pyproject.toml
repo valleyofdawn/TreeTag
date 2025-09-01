@@ -24,3 +24,6 @@ where = ["src"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+treetag = ["data/*.yaml"]

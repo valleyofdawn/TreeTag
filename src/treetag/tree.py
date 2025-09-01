@@ -1,22 +1,30 @@
 def init_tree(
-    tree_yaml: str,                    # Path to ontology tree YAML (nested dict of nodes)
-    markers_yaml: str | None = None,   # Optional markers YAML; if None, skip loading
-    root: str = "root",                # Node name to treat as subtree root
-    adata=None,                        # Optional AnnData; filters markers to dataset genes
+    tree_yaml: str | None,                  # now optional
+    markers_yaml: str | None = None,        # already optional is fine
+    root: str = "root",
+    adata=None,
 ):
-    """Subtree-aware loader.
-
-    - YAML may encode a full tree with any top-level key; `root` can be any node name inside it.
-    - Builds the directed graph from the entire YAML, then slices to the subtree rooted at `root`.
-    - If `markers_yaml` is provided, attaches v['pos_markers'], v['neg_markers'] (optionally filtered to `adata` genes).
-      Marker YAML format: node -> [genes], with negatives prefixed by '-'.
-    - If `markers_yaml` is None, no marker attributes are attached (faster for tasks like plot_tree).
-    """
+    """Subtree-aware loader (uses packaged PBMC YAMLs if paths are None)."""
     import yaml, igraph as ig
+    from importlib.resources import files
 
-    # Load tree
-    with open(tree_yaml, "r") as f:
-        tree = yaml.safe_load(f) or {}
+    def _load_yaml(src, default_name=None):
+        if src is None:
+            if default_name is None:
+                return {}
+            res = files("treetag.data").joinpath(default_name)
+            with res.open("r", encoding="utf-8") as f:
+                return yaml.safe_load(f) or {}
+        if hasattr(src, "open"):  # importlib.resources Traversable
+            with src.open("r", encoding="utf-8") as f:
+                return yaml.safe_load(f) or {}
+        with open(src, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f) or {}
+
+    # Use your PBMC files by default
+    tree = _load_yaml(tree_yaml,     default_name="PBMC_tree.yaml")
+    marker_dict = _load_yaml(markers_yaml, default_name="PBMC_markers.yaml")
+
     if not isinstance(tree, dict):
         raise ValueError("Tree YAML must be a nested mapping (dict of dicts).")
 
