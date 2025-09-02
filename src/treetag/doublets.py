@@ -1,7 +1,7 @@
 # src/treetag/doublets.py
 import numpy as np
 import pandas as pd
-from .tree import init_tree  # relative import from your package
+from ._init_tree import _init_tree as init_tree
 
 def find_doublets(
     adata,
@@ -52,9 +52,7 @@ def find_doublets(
         Summary with {'n_cells', 'families', 'root'}.
     """
     # 1) tree and direct children of root
-    G = init_tree(tree_yaml, markers_yaml=markers_yaml, root=root)
-    if not G.is_directed():
-        raise ValueError("Tree graph must be directed (parent → child).")
+    G = _init_tree(tree_yaml, markers_yaml=markers_yaml, root=root)
     u = G.vs.find(name=root).index
     child_idxs = G.successors(u)
     if len(child_idxs) < 2:

@@ -1,5 +1,5 @@
 from typing import Literal, List, Optional
-from .tree import init_tree
+from ._init_tree import _init_tree as init_tree
 
 def markers(cell_type: str,
             sign: str = "pos",

@@ -8,7 +8,7 @@ TreeTag is a lightweight Python package that automatically annotates single-cell
 
 - Integrates smoothly with AnnData and scanpy.
 
-- Reads human‑editable YAMLs for the ontology and for positive/negative markers and builds the ontology as a graph (via igraph) for hierarchical traversal **(init_tree)**.
+- Reads human‑editable YAMLs for the ontology and for positive/negative markers and builds the ontology as a graph (via igraph) for hierarchical traversal.
 
 - Visualizes the ontology to inspect and validate structure **(plot_tree)**.
 
@@ -84,7 +84,6 @@ root:
     CD4_T:
       Treg:
       Th:
-      _Tfh:
     CD8_T:
   B:
     Naive_B:
@@ -92,9 +91,12 @@ root:
   Myeloid:
     Mono:
     DC:
+    _mac:
+      res_mac:
+      mono_mac:
 ```
 
-**`!` note:** Any key starting with "_" is treated as **disabled**; the cell-type and its entire subtree are skipped.
+**`!` note:** Keys starting with "_" are **disabled**; the cell-type ("mac" in the example above) and its entire subtree ("res_mac" and "mono_mac") are skipped.
 
 #### Markers YAML
 
@@ -103,7 +105,7 @@ T_NK: [CD2, IL32, CD7, CD247, CD3E, LCK, IFITM1, GIMAP7, -MS4A1]
 CD4_T: [CD4, TRAT1, ICOS, GPR183, CD40LG, IL6ST, -CD8A, -CD8B]
 Treg: [FOXP3, RTKN2, IL2RA, IKZF2, CTLA4, TNFRSF18, TIGIT, -CD40LG]
 ```
-**`!` note:** At least 2 positive markers are needed per cell type. Negative markers start with "-" and are not obligatory. 
+**`!` note:** At least 2 positive markers are needed per cell type. Negative markers start with "-" and are not obligatory. Make sure not to put spaces after "-".
 
 ## Function reference
 
@@ -118,14 +120,14 @@ TreeTag(
     adata, # The AnnData object to analyze
     tree_yaml: str, # The YAML file describing the cell ontology
     markers_yaml: str, # The YAML file with the positive and negative markers for each cell in tree_yaml
-    root: str = 'root', # start node in the ontology (e.g., if your dataset only contains T and NK cells then root="T_NK")
+    root: str = 'root', # start node in the ontology (e.g., if your cell ontology is of all PBMCs but your dataset only contains T and NK cells then specify root="T_NK")
     min_marker_count: int = 2, # the minimum number of positive markers required for a cell type to be scored
     verbose: bool = False, # print per-split diagnostics and pruning details
     smoothing: bool = True, # KNN score smoothing using neighbors graph in adata.obsp
     majority_vote: bool = True, # one-pass label consensus using the same neighbors graph
     save_scores: bool = False, # write <cell type>_score columns to adata.obs
-    min_score: float = 0.0, # gate final labels below this score to "unknown" (0 disables)
-    min_pruning_fc: float = 1.5 # prune +markers per child if FC vs avg(other siblings) < this
+    min_score: float = 0.0, # gate final labels below this score to "unknown" (0 disables), can reveal cell-types missing from the cell ontology and prevent irrelevant cell-types from taking over ambiguous cell types.
+    min_pruning_fc: float = 1.5 # prune positive markers if FC vs avg(avg (other siblings)) is smaller than this
 
 **Writes:** `adata.obs["TreeTag"]`; if `save_scores=True`, also `<node>_score` columns.
 
@@ -134,31 +136,11 @@ TreeTag(
 **Common errors (and fixes):**
 
 * *No neighbor graph:* run `sc.pp.neighbors(adata, use_rep="X_pca")` **or** set `smoothing=False, majority_vote=False`.
-* *No subtree markers found:* check gene naming (symbols vs Ensembl), root, and `.raw` usage.
+* *No subtree markers found:* check gene naming (symbols vs Ensembl vs Entrez), root, and `.raw` usage.
 * *Neighbor shape mismatch:* rebuild neighbors **after** any cell filtering.
 ```
 ---
 
-### `init_tree`
-
-**What it does:** Loads ontology + markers, builds the graph, normalizes marker dicts. If adata is provided, omits missing markers.
-
-**Signature:**
-
-```python
-def init_tree(
-    tree_yaml: str,              # Path to ontology tree YAML (nested dict of nodes)
-    markers_yaml: str | None = None,  # Optional path to markers YAML; if None, skip marker loading
-    root: str = "root",          # Name of the node to treat as subtree root
-    adata=None,                  # Optional AnnData; if given, markers are filtered to its genes
-):
-```
-
-**Returns:**
-
-* `G`: graph of the ontology (node names in `G.vs["name"]`), with poaitive and negative marker attributes per node.
-
----
 
 ### `markers`
 
@@ -175,7 +157,6 @@ markers(
     adata=None,                    # optional filter to adata.var_names/raw.var_names
 ) -> list[str]
 ```
-
 ---
 
 ### `subscores`

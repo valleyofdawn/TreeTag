@@ -2,9 +2,10 @@ from typing import Optional, Union, Sequence, Tuple
 import textwrap
 import matplotlib.pyplot as plt
 import igraph as ig
+from ._init_tree import _init_tree as init_tree
  
 def plot_tree(
-    G: "ig.Graph",
+    tree_yaml: str,
     root: Optional[str] = None,
     vertex_size: int = 50,
     vertex_label_size: int = 9,
@@ -27,6 +28,7 @@ def plot_tree(
     Returns (fig, ax).
     """
     # --- labels ---
+    G = init_tree (tree_yaml, root=root)
     names = G.vs["name"] if "name" in G.vs.attributes() else [str(i) for i in range(G.vcount())]
     labels = [textwrap.fill(n.replace("_", " "), width=wrap_width, break_long_words=True) for n in names]
 

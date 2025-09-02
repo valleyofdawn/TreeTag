@@ -1,4 +1,4 @@
-from .tree import init_tree
+from ._init_tree import _init_tree as init_tree
 from .convert import convert
 
 def TreeTag(

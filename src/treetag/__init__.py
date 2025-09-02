@@ -1,4 +1,4 @@
-__all__ = ["init_tree", "markers", "subscores", "find_doublets", "TreeTag",
+__all__ = ["markers", "subscores", "find_doublets", "TreeTag",
 "plot_tree",  "convert"]
 __version__ = "0.1.0"
 
