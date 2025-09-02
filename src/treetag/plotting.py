@@ -1,8 +1,13 @@
-import textwrap
+import textwrap, colorsys
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import igraph as ig
 from ._init_tree import _init_tree as init_tree
+
+def _hsv_palette(n, s=0.5, v=0.85):
+    if n <= 0:
+        return []
+    return [mcolors.to_hex(colorsys.hsv_to_rgb(i / n, s, v)) for i in range(n)]
 
 def plot_tree(
     tree_yaml,
@@ -11,15 +16,15 @@ def plot_tree(
     vertex_label_size=9,
     bbox=(1400, 800),   # pixels
     margin=50,
-    palette="turbo",
+    palette=None,       # None -> auto HSV pastel; str -> matplotlib cmap name
     wrap_width=6,
 ):
     """
     Plot the ontology tree with igraph.
 
     palette:
-      - "turbo" by default (continuous rainbow)
-      - any matplotlib colormap name (e.g. "tab20", "rainbow")
+      - None  -> auto HSV pastel (S=0.5, V=0.85)
+      - str   -> matplotlib colormap name ("tab20", "turbo", "rainbow", ...)
     """
     G = init_tree(tree_yaml, root=root)
     names = G.vs["name"] if "name" in G.vs.attributes() else [str(i) for i in range(G.vcount())]
@@ -32,8 +37,11 @@ def plot_tree(
 
     # colors
     n = len(names)
-    cmap = plt.get_cmap(palette)
-    vcols = [mcolors.to_hex(cmap(i / max(n - 1, 1))) for i in range(n)]
+    if palette is None:
+        vcols = _hsv_palette(n, s=0.5, v=0.85)
+    else:
+        cmap = plt.get_cmap(palette)
+        vcols = [mcolors.to_hex(cmap(i / max(n - 1, 1))) for i in range(n)]
 
     # figure
     fig, ax = plt.subplots(figsize=(bbox[0] / 100, bbox[1] / 100))
