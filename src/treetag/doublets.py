@@ -63,7 +63,7 @@ def find_doublets(
     cols = [f"{c}_score" for c in families]
     missing = [c for c in cols if c not in adata.obs.columns]
     if missing:
-        raise KeyError(f"Missing expected score columns from TreeTag: {missing}")
+        raise KeyError(f"Missing expected score columns from TreeTag: {missing}. Make sure TreeTag has been run with save_scores=True" )
     S = adata.obs[cols].to_numpy(dtype=float)
     S = np.nan_to_num(S, nan=0.0)
 

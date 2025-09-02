@@ -1,39 +1,33 @@
-from typing import Literal, List, Optional
+import igraph as ig
 from ._init_tree import _init_tree as init_tree
 
-def markers(cell_type: str,
-            sign: str = "pos",
-            markers_yaml: str = "markers.yaml",
-            tree_yaml: str = "tree.yaml",
-            adata=None):
+def markers(cell_type, sign="pos", markers_yaml=None, adata=None):
     """
-    Return the marker list for a given cell_type and sign ('pos' or 'neg'),
-    using the new graph structure where markers are stored on nodes.
-    If `adata` is provided, markers are filtered to genes present in the data.
+    markers_yaml format: cell_type: [gene1, gene2, -gene3]
+    Build a single-node graph (cell_type), run init_tree(graph, markers_yaml),
+    and return markers by sign: 'pos' | 'neg' | 'both'.
     """
-    if sign not in {"pos", "neg"}:
-        raise ValueError("sign must be 'pos' or 'neg'")
+    if sign not in {"pos", "neg", "both"}:
+        raise ValueError("sign must be 'pos', 'neg', or 'both'")
+    if not markers_yaml:
+        raise ValueError("markers_yaml path required")
 
-    # Build graph with markers attached (filtered if adata is given)
-    G = init_tree(tree_yaml, markers_yaml, root="root", adata=adata)  # use your actual root name
+    # single-node ontology
+    G = ig.Graph(directed=True)
+    G.add_vertex(name=cell_type)
 
-    # Look up the node
-    try:
-        v = G.vs.find(name=cell_type)
-    except ValueError:
-        print(f"Cell type '{cell_type}' not found in the tree. Skipping.")
-        return []
+    # normalize via init_tree (splits into pos_markers / neg_markers, filters vs adata)
+    G = init_tree(G, markers_yaml, root=cell_type, adata=adata)
 
-    attr = "pos_markers" if sign == "pos" else "neg_markers"
-    lst = list(v[attr]) if v[attr] is not None else []
+    v = G.vs.find(name=cell_type)
+    pos = list(v["pos_markers"] or [])
+    neg = list(v["neg_markers"] or [])
 
-    # Extra safety: if adata was provided, ensure presence in the matrix
     if adata is not None:
         var_names = adata.raw.var_names if getattr(adata, "raw", None) is not None else adata.var_names
-        present = [g for g in lst if g in var_names]
-        missing = [g for g in lst if g not in var_names]
-        for g in missing:
-            print(f"Marker '{g}' not found in data. Skipping.")
-        return present
+        pos = [g for g in pos if g in var_names]
+        neg = [g for g in neg if g in var_names]
 
-    return lst
+    if sign == "both":
+        return {"pos": pos, "neg": neg}
+    return pos if sign == "pos" else neg

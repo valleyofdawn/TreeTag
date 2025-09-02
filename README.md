@@ -45,8 +45,9 @@ python -c "import treetag, sys; print('TreeTag', treetag.__version__)"
 import scanpy as sc
 import treetag as tt
 
-# 1) Load data (PBMC works best with the included examples)
-adata = sc.read_h5ad("my_data.h5ad")
+# 1) Load example PBMC dataset (downloaded directly from CZI / cellxgene)
+!wget -O pbmc_example.h5ad \
+  https://datasets.cellxgene.cziscience.com/fdf57c52-ad71-4004-9db2-a962e849b524.h5ad
 
 # 2) (Recommended) Harmonize gene names
 tt.convert(adata, prefer_var_cols=("feature_name"))
