@@ -23,7 +23,7 @@ def plot_tree(
     Plot the ontology tree with igraph.
 
     palette:
-      - None  -> auto HSV pastel (S=0.5, V=0.85)
+      - None  -> auto HSV pastel (S=0.3, V=1)
       - str   -> matplotlib colormap name ("tab20", "turbo", "rainbow", ...)
     """
     G = init_tree(tree_yaml, root=root)
@@ -38,7 +38,7 @@ def plot_tree(
     # colors
     n = len(names)
     if palette is None:
-        vcols = _hsv_palette(n, s=0.5, v=0.85)
+        vcols = _hsv_palette(n, s=0.3, v=1)
     else:
         cmap = plt.get_cmap(palette)
         vcols = [mcolors.to_hex(cmap(i / max(n - 1, 1))) for i in range(n)]
