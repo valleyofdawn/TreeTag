@@ -1,4 +1,4 @@
-def init_tree(
+def _init_tree (
     tree_yaml: str,
     markers_yaml: str | None = None,
     root: str = "root",
