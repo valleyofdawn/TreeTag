@@ -1,72 +1,45 @@
-from typing import Optional, Union, Sequence, Tuple
 import textwrap
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import igraph as ig
 from ._init_tree import _init_tree as init_tree
- 
+
 def plot_tree(
-    tree_yaml: str,
-    root: Optional[str] = None,
-    vertex_size: int = 50,
-    vertex_label_size: int = 9,
-    bbox: Tuple[int, int] = (1400, 800),   # pixels
-    margin: int = 50,
-    palette: Optional[Union[dict, Sequence[str]]] = None,
-    wrap_width: int = 6,
-    dpi: Optional[int] = None,
-    ax: Optional[plt.Axes] = None,
-    show: bool = True,
-) -> Tuple[plt.Figure, plt.Axes]:
+    tree_yaml,
+    root="root",
+    vertex_size=50,
+    vertex_label_size=9,
+    bbox=(1400, 800),   # pixels
+    margin=50,
+    palette="turbo",
+    wrap_width=6,
+):
     """
     Plot the ontology tree with igraph.
 
     palette:
-      - None                 -> all vertices gray
-      - dict {node: color}   -> per-node colors (others default gray)
-      - list/tuple           -> one color per vertex (len == number of vertices)
-
-    Returns (fig, ax).
+      - "turbo" by default (continuous rainbow)
+      - any matplotlib colormap name (e.g. "tab20", "rainbow")
     """
-    # --- labels ---
-    G = init_tree (tree_yaml, root=root)
+    G = init_tree(tree_yaml, root=root)
     names = G.vs["name"] if "name" in G.vs.attributes() else [str(i) for i in range(G.vcount())]
     labels = [textwrap.fill(n.replace("_", " "), width=wrap_width, break_long_words=True) for n in names]
 
-    # --- layout (top-down Reingold–Tilford) ---
-    if root is not None:
-        try:
-            ridx = G.vs.find(name=root).index
-        except ValueError as e:
-            raise ValueError(f"root '{root}' not found in graph node names") from e
-        layout = G.layout_reingold_tilford(root=[ridx], mode="out")
-    else:
-        layout = G.layout_reingold_tilford(mode="out")
-    coords = [(x, -y) for x, y in layout]  # flip Y for top-down
+    # layout (top-down)
+    ridx = G.vs.find(name=root).index
+    layout = G.layout_reingold_tilford(root=[ridx], mode="out")
+    coords = [(x, -y) for x, y in layout]
 
-    # --- colors ---
-    default_color = "#C0C0C0"
-    if palette is None:
-        vcols = [default_color] * len(names)
-    elif isinstance(palette, dict):
-        vcols = [palette.get(n, default_color) for n in names]
-    elif isinstance(palette, (list, tuple)):
-        if len(palette) != len(names):
-            raise ValueError(f"palette length {len(palette)} != number of vertices {len(names)}")
-        vcols = list(palette)
-    else:
-        raise TypeError("palette must be None, dict, or list/tuple of colors")
+    # colors
+    n = len(names)
+    cmap = plt.get_cmap(palette)
+    vcols = [mcolors.to_hex(cmap(i / max(n - 1, 1))) for i in range(n)]
 
-    # --- figure/axes ---
-    if ax is None:
-        # Figure size in inches
-        use_dpi = dpi if dpi is not None else plt.rcParams.get("figure.dpi", 100)
-        figsize = (bbox[0] / use_dpi, bbox[1] / use_dpi)
-        fig, ax = plt.subplots(figsize=figsize, dpi=use_dpi)
-    else:
-        fig = ax.figure
+    # figure
+    fig, ax = plt.subplots(figsize=(bbox[0] / 100, bbox[1] / 100))
     ax.set_axis_off()
 
-    # --- draw ---
+    # draw
     ig.plot(
         G.as_undirected(),
         target=ax,
@@ -80,6 +53,5 @@ def plot_tree(
         edge_color="gray",
     )
     plt.tight_layout()
-    if show:
-        plt.show()
+    plt.show()
     return fig, ax
