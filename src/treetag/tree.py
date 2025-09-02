@@ -31,7 +31,7 @@ def init_tree(
     # Flatten YAML -> edge list, skipping '!' branches
     def iter_edges(parent, mapping):
         for child, sub in (mapping or {}).items():
-            if not child or str(child).startswith("!"):
+            if not child or str(child).startswith("_"):
                 continue
             c = str(child)
             yield (parent, c)
@@ -40,7 +40,7 @@ def init_tree(
 
     edges = []
     for top, sub in tree.items():
-        if not top or str(top).startswith("!"):
+        if not top or str(top).startswith("_"):
             continue
         t = str(top)
         edges.extend(iter_edges(t, sub if isinstance(sub, dict) else {}))
