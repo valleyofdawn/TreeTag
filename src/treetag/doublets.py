@@ -84,6 +84,7 @@ def find_doublets(
 
     if write_cols:
         adata.obs["doublet_score"] = ratio
-        adata.obs["doublet_partner"]  = pd.Categorical(top2, categories=families)
+        adata.obs["cell#1"]  = pd.Categorical(top1, categories=families)
+        adata.obs["cell#2"]  = pd.Categorical(top2, categories=families)
 
     return {"n_cells": int(n_cells), "families": families, "root": root}
