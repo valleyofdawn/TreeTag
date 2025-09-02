@@ -11,13 +11,13 @@ def fetch_files(names: str | Path | Sequence[str | Path] | None = None,
                 dest: str | Path = ".", overwrite: bool = False) -> list[str]:
     """Copy 1 or many files from treetag/data to dest. Returns list of dest paths."""
     if names is None:
-        names = list_file()
+        names = list_files()
     elif isinstance(names, (str, Path)):
         names = [names]
     # normalize to bare filenames
     names = [Path(n).name for n in names]
 
-    available = set(list_file())
+    available = set(list_files())
     missing = [n for n in names if n not in available]
     if missing:
         raise ValueError(f"Not found: {missing}. Available: {sorted(available)}")
