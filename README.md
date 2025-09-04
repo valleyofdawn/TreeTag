@@ -42,37 +42,49 @@ python -c "import treetag, sys; print('TreeTag', treetag.__version__)"
 ---
 ## Quickstart
 ```python
-import scanpy as sc
-import treetag as tt
 
-# 1) Load example PBMC dataset (downloaded directly from CZI / cellxgene)
-!wget -O pbmc_example.h5ad \
-  https://datasets.cellxgene.cziscience.com/fdf57c52-ad71-4004-9db2-a962e849b524.h5ad
+# 1) Install deps + your package from GitHub
+!pip install -q scanpy
+!pip install -q git+https://github.com/valleyofdawn/treetag.git
+import treetag as tt, scanpy as sc
+import matplotlib.pyplot as plt
 
-# 2) (Recommended) Harmonize gene names
-tt.convert(adata, prefer_var_cols=("feature_name"))
+# 2) Load example PBMC dataset (downloaded directly from CZI / cellxgene)
+!wget -O PBMC_dataset.h5ad \
+https://datasets.cellxgene.cziscience.com/fdf57c52-ad71-4004-9db2-a962e849b524.h5ad
+adata = sc.read_h5ad("PBMC_dataset.h5ad")
 
-# 3) Neighbors (needed only if smoothing/majority_vote=True)
+# 3) (Recommended) Harmonize gene names
+tt.convert(adata, prefer_var_cols=("feature_name",))
+
+# 4) Neighbors (needed only if smoothing/majority_vote=False)
 sc.pp.pca(adata)
 sc.pp.neighbors(adata, use_rep="X_pca")
 
-# 4) Copy example YAMLs to a local folder so you can edit them
-tree_yaml, markers_yaml = tt.copy_example_yaml(dest="data")  # returns paths
+# 5) Copy example YAMLs to a local folder so you can edit them
+print("Available example files:", tt.list_files())
+tree_yaml, markers_yaml = tt.fetch_files (["PBMC_tree.yaml", "PBMC_markers.yaml"], dest=".")  # returns paths
 
-# 5) Run TreeTag (explicit YAML paths; no defaults)
-tt.TreeTag(
-    adata,
-    tree_yaml=tree_yaml,                 # e.g., data/PBMC_tree.yaml
-    markers_yaml=markers_yaml,           # e.g., data/PBMC_markers.yaml
-    root="root",
-    smoothing=True,
-    majority_vote=True,
-    save_scores=True,
-)
+# 6) Plot the ontology tree (structure only, subtree of root)
+plt.rcParams["figure.figsize"] = (8, 8)
+tt.plot_tree("PBMC_tree.yaml", root="root")
 
-# 6) Inspect results
-print(adata.obs["TreeTag"].value_counts())
-sc.pl.umap(adata, color="TreeTag", size=8)
+# 7) Run TreeTag (explicit YAML paths)
+tt.TreeTag (adata, tree_yaml='PBMC_tree.yaml', markers_yaml='PBMC_markers.yaml', root="root", smoothing=True, majority_vote=True, save_scores=True)
+
+# 8) Inspect results compared to ground truth
+sc.pl.umap(adata, color=["TreeTag",'scType_celltype'], size=5, legend_loc='on data', legend_fontsize=10, legend_fontweight='regular')
+
+# 9) Doublet detection
+tt.find_doublets(adata, tree_yaml='PBMC_tree.yaml', markers_yaml='PBMC_markers.yaml', root="root" )
+sc.pl.umap(adata, color=['doublet_score','cell#1','cell#2'], size=5, legend_loc='lower left', legend_fontsize=10, legend_fontweight='regular')
+
+# 10) Cell type markers (you can also observe "neg" markers or "both")
+print ("B-cell markers (pos):", tt.markers (cell_type ="B", sign= "pos",  markers_yaml='PBMC_markers.yaml'))
+
+# 11) Cell scores
+sc.pl.umap (adata,color = tt.subscores (root_cell='CD4',adata=adata, markers_yaml='PBMC_markers.yaml',tree_yaml='PBMC_tree.yaml', only_leaves=True), size=5, legend_loc='on data', legend_fontsize=10, legend_fontweight='regular')
+
 ```
 
 ## YAML File Formats
