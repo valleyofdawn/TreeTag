@@ -1,3 +1,5 @@
+import pandas as pd, numpy as np, anndata as ad, scipy.sparse as sp, treetag as tt
+
 def test_find_doublets_basic_runs(tiny_ad, yaml_paths):
     a = tiny_ad.copy()  # AnnData is mutable
     tree, markers = yaml_paths
