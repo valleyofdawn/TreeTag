@@ -48,10 +48,10 @@ def toy_yaml_pair(tmp_path_factory):
     d = tmp_path_factory.mktemp("yaml")
     tree_p = d / "PBMC_tree.yaml"
     mark_p = d / "PBMC_markers.yaml"
-    tree_p.write_text("Root:\n  B:\n  T:\n")
+    tree_p.write_text("root:\n  B:\n  T:\n")
     # ≥2 +markers per family; explicit negatives vs. others
     mark_p.write_text(
-        "B: [MS4A1, IGHM, -CD3D, -TRAC, -LYZ, -S100A8]\n"
+        "B: [MS4A1, IGHM, -CD3D]\n"
         "T: [CD3D, TRAC, -MS4A1, -IGHM, -LYZ, -S100A8]\n"
     )
     return str(tree_p), str(mark_p)
