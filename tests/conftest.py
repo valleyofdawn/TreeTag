@@ -1,12 +1,25 @@
-import pytest, numpy as np, pandas as pd
+import pytest
+import numpy as np
+import pandas as pd
 import scipy.sparse as sp
 import anndata as ad
 
+@pytest.fixture
+def tiny_ad(tiny_adata_csr):
+    return tiny_adata_csr
+
+@pytest.fixture
+def yaml_paths(toy_yaml_pair):
+    return toy_yaml_pair
+
+@pytest.fixture
+def tmp_dir(tmp_path):
+    return tmp_path
 
 @pytest.fixture(scope="function")
 def tiny_adata_csr():
     # 9 cells × 6 genes: T, B, and myeloid blocks
-    genes = ["CD3D", "TRAC", "MS4A1", "CD79A", "LYZ", "S100A8"]
+    genes = ["CD3D", "TRAC", "MS4A1", "IGHM", "LYZ", "S100A8"]
     X = np.array(
         [
             [5, 4, 0, 0, 1, 0],  # T-like
@@ -38,7 +51,7 @@ def toy_yaml_pair(tmp_path_factory):
     tree_p.write_text("Root:\n  B:\n  T:\n")
     # ≥2 +markers per family; explicit negatives vs. others
     mark_p.write_text(
-        "B: [MS4A1, CD79A, -CD3D, -TRAC, -LYZ, -S100A8]\n"
-        "T: [CD3D, TRAC, -MS4A1, -CD79A, -LYZ, -S100A8]\n"
+        "B: [MS4A1, IGHM, -CD3D, -TRAC, -LYZ, -S100A8]\n"
+        "T: [CD3D, TRAC, -MS4A1, -IGHM, -LYZ, -S100A8]\n"
     )
     return str(tree_p), str(mark_p)
