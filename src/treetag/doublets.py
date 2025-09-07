@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from ._init_tree import _init_tree as init_tree
 
+
 def find_doublets(
     adata,
     tree_yaml: str,
@@ -63,18 +64,20 @@ def find_doublets(
     cols = [f"{c}_score" for c in families]
     missing = [c for c in cols if c not in adata.obs.columns]
     if missing:
-        raise KeyError(f"Missing expected score columns from TreeTag: {missing}. Make sure TreeTag has been run with save_scores=True" )
+        raise KeyError(
+            f"Missing expected score columns from TreeTag: {missing}. Make sure TreeTag has been run with save_scores=True"
+        )
     S = adata.obs[cols].to_numpy(dtype=float)
     S = np.nan_to_num(S, nan=0.0)
 
     # 3) Top-2 per cell
     n_cells = S.shape[0]
-    idx_top2 = np.argpartition(S, -2, axis=1)[:, -2:]          # unsorted top-2 indices per row
+    idx_top2 = np.argpartition(S, -2, axis=1)[:, -2:]  # unsorted top-2 indices per row
     row = np.arange(n_cells)[:, None]
-    top2_vals = S[row, idx_top2]                               # (n, 2)
-    order = np.argsort(top2_vals, axis=1)                      # ascending within the pair
-    best_idx   = idx_top2[row, order[:, 1][:, None]].ravel()   # index of M1
-    second_idx = idx_top2[row, order[:, 0][:, None]].ravel()   # index of M2
+    top2_vals = S[row, idx_top2]  # (n, 2)
+    order = np.argsort(top2_vals, axis=1)  # ascending within the pair
+    best_idx = idx_top2[row, order[:, 1][:, None]].ravel()  # index of M1
+    second_idx = idx_top2[row, order[:, 0][:, None]].ravel()  # index of M2
 
     M1 = S[np.arange(n_cells), best_idx]
     M2 = S[np.arange(n_cells), second_idx]
@@ -84,7 +87,7 @@ def find_doublets(
 
     if write_cols:
         adata.obs["doublet_score"] = ratio
-        adata.obs["cell#1"]  = pd.Categorical(top1, categories=families)
-        adata.obs["cell#2"]  = pd.Categorical(top2, categories=families)
+        adata.obs["cell#1"] = pd.Categorical(top1, categories=families)
+        adata.obs["cell#2"] = pd.Categorical(top2, categories=families)
 
     return {"n_cells": int(n_cells), "families": families, "root": root}

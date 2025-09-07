@@ -50,4 +50,5 @@ treetag = ["data/*.yaml"]
 test = ["pytest>=8", "anndata", "scanpy", "numpy", "scipy", "pandas"]
 
 [tool.ruff]
-extend-exclude = ["*.ipynb"]
+src = ["src"]
+extend-exclude = ["tests", "*.ipynb"]

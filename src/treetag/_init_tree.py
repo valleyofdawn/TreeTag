@@ -1,4 +1,4 @@
-def _init_tree (
+def _init_tree(
     tree_yaml: str,
     markers_yaml: str | None = None,
     root: str = "root",
@@ -12,7 +12,8 @@ def _init_tree (
       Marker YAML: node -> [genes], negatives prefixed by '-'. (Quote them in YAML.)
     - Nodes starting with '_' (or '!') are ignored/disabled.
     """
-    import yaml, igraph as ig
+    import yaml
+    import igraph as ig
     from pathlib import Path
 
     # Load tree
@@ -74,7 +75,11 @@ def _init_tree (
     vg = None
     if adata is not None:
         try:
-            vg = set(adata.raw.var_names if getattr(adata, "raw", None) is not None else adata.var_names)
+            vg = set(
+                adata.raw.var_names
+                if getattr(adata, "raw", None) is not None
+                else adata.var_names
+            )
         except Exception:
             vg = None
 

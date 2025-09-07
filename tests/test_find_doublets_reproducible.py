@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 import treetag as tt
 
+
 def test_find_doublets_reproducible(tiny_adata_csr, toy_yaml_pair):
     tree_y, mark_y = toy_yaml_pair
 
@@ -17,7 +18,9 @@ def test_find_doublets_reproducible(tiny_adata_csr, toy_yaml_pair):
     if "save_scores" in sig.parameters:
         extra["save_scores"] = True
     try:
-        ctor(tiny_adata_csr, tree_yaml=tree_y, markers_yaml=mark_y, root="Root", **extra)
+        ctor(
+            tiny_adata_csr, tree_yaml=tree_y, markers_yaml=mark_y, root="Root", **extra
+        )
     except ValueError as e:
         pytest.xfail(f"pruning stopped on toy data: {e}")
 
@@ -25,7 +28,12 @@ def test_find_doublets_reproducible(tiny_adata_csr, toy_yaml_pair):
         assert col in tiny_adata_csr.obs, f"Missing {col}"
 
     fn = tt.find_doublets
-    kwargs = {"adata": tiny_adata_csr, "tree_yaml": tree_y, "markers_yaml": mark_y, "root": "Root"}
+    kwargs = {
+        "adata": tiny_adata_csr,
+        "tree_yaml": tree_y,
+        "markers_yaml": mark_y,
+        "root": "Root",
+    }
     if "random_state" in inspect.signature(fn).parameters:
         kwargs["random_state"] = 0
 
@@ -48,7 +56,8 @@ def test_find_doublets_reproducible(tiny_adata_csr, toy_yaml_pair):
 
     # Mode B: returns array-like scores
     if out1 is not None:
-        a1 = np.asarray(out1); a2 = np.asarray(fn(**kwargs))
+        a1 = np.asarray(out1)
+        a2 = np.asarray(fn(**kwargs))
         assert a1.ndim == 1 and a2.ndim == 1
         assert a1.shape == a2.shape
         assert a1.shape[0] in (0, tiny_adata_csr.n_obs)

@@ -1,22 +1,25 @@
-import textwrap, colorsys
+import textwrap
+import colorsys
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import igraph as ig
 from ._init_tree import _init_tree as init_tree
+
 
 def _hsv_palette(n, s=0.5, v=0.85):
     if n <= 0:
         return []
     return [mcolors.to_hex(colorsys.hsv_to_rgb(i / n, s, v)) for i in range(n)]
 
+
 def plot_tree(
     tree_yaml,
     root="root",
     vertex_size=50,
     vertex_label_size=9,
-    bbox=(1400, 800),   # pixels
+    bbox=(1400, 800),  # pixels
     margin=50,
-    palette=None,       # None -> auto HSV pastel; str -> matplotlib cmap name
+    palette=None,  # None -> auto HSV pastel; str -> matplotlib cmap name
     wrap_width=6,
 ):
     """
@@ -27,8 +30,15 @@ def plot_tree(
       - str   -> matplotlib colormap name ("tab20", "turbo", "rainbow", ...)
     """
     G = init_tree(tree_yaml, root=root)
-    names = G.vs["name"] if "name" in G.vs.attributes() else [str(i) for i in range(G.vcount())]
-    labels = [textwrap.fill(n.replace("_", " "), width=wrap_width, break_long_words=True) for n in names]
+    names = (
+        G.vs["name"]
+        if "name" in G.vs.attributes()
+        else [str(i) for i in range(G.vcount())]
+    )
+    labels = [
+        textwrap.fill(n.replace("_", " "), width=wrap_width, break_long_words=True)
+        for n in names
+    ]
 
     # layout (top-down)
     ridx = G.vs.find(name=root).index

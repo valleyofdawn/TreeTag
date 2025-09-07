@@ -2,6 +2,7 @@ from __future__ import annotations
 import pandas as pd
 from ._init_tree import _init_tree as init_tree
 
+
 def subscores(
     root: str,
     adata,
@@ -27,16 +28,20 @@ def subscores(
         desc = [i for i in desc if G.outdegree(i) == 0]
 
     nodes = [G.vs[i]["name"] for i in desc]
-    cols  = [f"{n}_score" for n in nodes]
+    cols = [f"{n}_score" for n in nodes]
 
     # 2) Keep only columns that actually exist
     existing = [c for c in cols if c in adata.obs]
-    missing  = [c for c in cols if c not in adata.obs]
+    missing = [c for c in cols if c not in adata.obs]
 
     if require_all and missing:
         raise KeyError(f"Missing expected score columns: {missing}")
 
     if return_df:
-        return adata.obs[existing].copy() if existing else pd.DataFrame(index=adata.obs.index)
+        return (
+            adata.obs[existing].copy()
+            if existing
+            else pd.DataFrame(index=adata.obs.index)
+        )
 
     return existing

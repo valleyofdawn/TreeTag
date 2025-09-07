@@ -1,5 +1,8 @@
-import os, tempfile, yaml
+import os
+import tempfile
+import yaml
 from ._init_tree import _init_tree as init_tree
+
 
 def markers(cell_type, sign="pos", markers_yaml=None, adata=None):
     """
@@ -23,12 +26,18 @@ def markers(cell_type, sign="pos", markers_yaml=None, adata=None):
         pos = list(v["pos_markers"] or [])
         neg = list(v["neg_markers"] or [])
         if adata is not None:
-            var_names = adata.raw.var_names if getattr(adata, "raw", None) is not None else adata.var_names
+            var_names = (
+                adata.raw.var_names
+                if getattr(adata, "raw", None) is not None
+                else adata.var_names
+            )
             pos = [g for g in pos if g in var_names]
             neg = [g for g in neg if g in var_names]
         if sign == "both":
             return {"pos": pos, "neg": neg}
         return pos if sign == "pos" else neg
     finally:
-        try: os.unlink(tree_path)
-        except: pass
+        try:
+            os.unlink(tree_path)
+        except Exception:
+            pass

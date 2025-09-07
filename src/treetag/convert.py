@@ -2,6 +2,7 @@
 from __future__ import annotations
 from typing import Sequence
 
+
 def convert(
     adata,
     prefer_var_cols: Sequence[str] = ("feature_name", "gene_symbols", "SYMBOL"),
@@ -36,7 +37,10 @@ def convert(
                 adata.var_names_make_unique()
 
                 # best-effort sync of .raw (only if same number of vars)
-                if adata.raw is not None and getattr(adata.raw, "n_vars", None) == adata.n_vars:
+                if (
+                    adata.raw is not None
+                    and getattr(adata.raw, "n_vars", None) == adata.n_vars
+                ):
                     try:
                         adata.raw.var["original_gene"] = adata.raw.var_names.astype(str)
                         adata.raw.var.index = adata.var_names
