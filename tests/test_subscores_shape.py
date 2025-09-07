@@ -7,7 +7,7 @@ def test_subscores_output_type_and_shape(tiny_adata_csr, toy_yaml_pair):
     tree_y, mark_y = toy_yaml_pair
 
     out = tt.subscores(
-        adata=tiny_adata_csr, tree_yaml=tree_y, markers_yaml=mark_y, root="Root"
+        adata=tiny_adata_csr, tree_yaml=tree_y, markers_yaml=mark_y, root="root"
     )
 
     # Case 1: DataFrame

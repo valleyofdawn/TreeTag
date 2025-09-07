@@ -19,7 +19,7 @@ def test_find_doublets_reproducible(tiny_adata_csr, toy_yaml_pair):
         extra["save_scores"] = True
     try:
         ctor(
-            tiny_adata_csr, tree_yaml=tree_y, markers_yaml=mark_y, root="Root", **extra
+            tiny_adata_csr, tree_yaml=tree_y, markers_yaml=mark_y, root="root", **extra
         )
     except ValueError as e:
         pytest.xfail(f"pruning stopped on toy data: {e}")
@@ -32,7 +32,7 @@ def test_find_doublets_reproducible(tiny_adata_csr, toy_yaml_pair):
         "adata": tiny_adata_csr,
         "tree_yaml": tree_y,
         "markers_yaml": mark_y,
-        "root": "Root",
+        "root": "root",
     }
     if "random_state" in inspect.signature(fn).parameters:
         kwargs["random_state"] = 0
