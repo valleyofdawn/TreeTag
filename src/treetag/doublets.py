@@ -10,41 +10,39 @@ def find_doublets(
     markers_yaml: str | None,
     root: str,
     write_cols: bool = True,
-    eps: float = 0.1,
+    beta: float | None = None,
 ):
     """
     Compute simple doublet diagnostics from the first split (children of `root`).
 
-    How it works
-    ------------
-    For each cell, look at the per-family scores written by TreeTag (one column per
-    child: "<child>_score"). Let M1 be the highest score (winning family) and M2
-    the second-highest. Define:
-        doublet_score = (eps + M2) / (eps + M1)
-    Because M2 ≤ M1, this ratio is in (0, 1]; values near 1.0 suggest the cell is
-    pulled strongly by two families (doublet-like), while values near 0 indicate
-    a clear single-family winner.
+    Method
+    ------
+    For each cell, read per-family scores ("<child>_score"). Let M1 be the max score
+    and M2 the second max. Define M = M1 + M2 and:
+        doublet_score = (M2 / (M1 + 1e-8)) * ( M / (M + beta) )
+    with beta = median(M) by default. This preserves the M2/M1 ratio at normal signal
+    and suppresses it when both M1 and M2 are tiny. No hard gating.
 
     Parameters
     ----------
     adata : AnnData
-        Object containing the "<child>_score" columns from TreeTag (save_scores=True).
+        Contains the "<child>_score" columns from TreeTag (save_scores=True).
     tree_yaml : str
-        Path to the ontology YAML (used to discover the root's children).
+        Path to ontology YAML (used to discover root's children).
     markers_yaml : str | None
-        Path to markers YAML, or None to skip loading markers (faster).
+        Path to markers YAML, or None to skip loading markers.
     root : str
         Node name to treat as the split root.
     write_cols : bool, default True
         If True, writes results to `adata.obs`.
-    eps : float, default 0.1
-        Small stabilizer to avoid division by zero and smooth tiny values.
+    beta : float | None
+        Shrinkage scale for low-signal suppression. If None, uses median(M).
 
     Writes (if write_cols=True)
     ---------------------------
     adata.obs['doublet_score'] : float
-        (eps + M2) / (eps + M1), in (0, 1]; higher ⇒ more doublet-like.
-    adata.obs['doublet_partner']  : category
+        (M2/(M1+1e-8)) * (M/(M+beta)); higher ⇒ more doublet-like.
+    adata.obs['doublet_partner'] : category
         Runner-up family.
 
     Returns
@@ -65,14 +63,15 @@ def find_doublets(
     missing = [c for c in cols if c not in adata.obs.columns]
     if missing:
         raise KeyError(
-            f"Missing expected score columns from TreeTag: {missing}. Make sure TreeTag has been run with save_scores=True"
+            f"Missing expected score columns from TreeTag: {missing}. "
+            f"Run TreeTag with save_scores=True."
         )
     S = adata.obs[cols].to_numpy(dtype=float)
     S = np.nan_to_num(S, nan=0.0)
 
     # 3) Top-2 per cell
     n_cells = S.shape[0]
-    idx_top2 = np.argpartition(S, -2, axis=1)[:, -2:]  # unsorted top-2 indices per row
+    idx_top2 = np.argpartition(S, -2, axis=1)[:, -2:]
     row = np.arange(n_cells)[:, None]
     top2_vals = S[row, idx_top2]  # (n, 2)
     order = np.argsort(top2_vals, axis=1)  # ascending within the pair
@@ -81,12 +80,22 @@ def find_doublets(
 
     M1 = S[np.arange(n_cells), best_idx]
     M2 = S[np.arange(n_cells), second_idx]
-    ratio = (eps + M2) / (eps + M1)
+    M = M1 + M2
+
+    # beta: scale for magnitude shrinkage
+    if beta is None:
+        med = np.median(M) if n_cells > 0 else 0.0
+        beta = med if med > 0 else 1.0  # avoid zero beta
+
+    ratio = M2 / (M1 + 1e-8)
+    mag = M / (M + beta)
+    score = ratio * mag
+
     top1 = np.array(families, dtype=object)[best_idx]
     top2 = np.array(families, dtype=object)[second_idx]
 
     if write_cols:
-        adata.obs["doublet_score"] = ratio
+        adata.obs["doublet_score"] = score
         adata.obs["cell#1"] = pd.Categorical(top1, categories=families)
         adata.obs["cell#2"] = pd.Categorical(top2, categories=families)
 
