@@ -48,3 +48,6 @@ treetag = ["data/*.yaml"]
 
 [project.optional-dependencies]
 test = ["pytest>=8", "anndata", "scanpy", "numpy", "scipy", "pandas"]
+
+[tool.ruff]
+extend-exclude = ["*.ipynb"]
