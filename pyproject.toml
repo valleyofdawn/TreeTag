@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "treetag"
-version = "0.1.0"
+version = "0.1.1"
 description = "Hierarchical cell-type tagging with YAML ontologies and markers."
 readme = "README.md"
 requires-python = ">=3.10"
