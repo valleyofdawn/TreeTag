@@ -46,10 +46,10 @@ def test_find_doublets_reproducible(tiny_adata_csr, toy_yaml_pair):
         out2 = fn(**kwargs)
         assert isinstance(out2, dict) and out1 == out2
         # in-place columns must exist and be stable
-        assert "doublet_score" in tiny_adata_csr.obs
-        v1 = tiny_adata_csr.obs["doublet_score"].to_numpy()
+        assert "mismatch_score" in tiny_adata_csr.obs
+        v1 = tiny_adata_csr.obs["mismatch_score"].to_numpy()
         _ = fn(**kwargs)
-        v2 = tiny_adata_csr.obs["doublet_score"].to_numpy()
+        v2 = tiny_adata_csr.obs["mismatch_score"].to_numpy()
         assert v1.shape[0] == tiny_adata_csr.n_obs
         assert np.allclose(v1, v2)
         return
@@ -65,9 +65,9 @@ def test_find_doublets_reproducible(tiny_adata_csr, toy_yaml_pair):
         return
 
     # Mode C: returns None, wrote in-place
-    assert "doublet_score" in tiny_adata_csr.obs
-    v1 = tiny_adata_csr.obs["doublet_score"].to_numpy()
+    assert "mismatch_score" in tiny_adata_csr.obs
+    v1 = tiny_adata_csr.obs["mismatch_score"].to_numpy()
     _ = fn(**kwargs)
-    v2 = tiny_adata_csr.obs["doublet_score"].to_numpy()
+    v2 = tiny_adata_csr.obs["mismatch_score"].to_numpy()
     assert v1.shape[0] == tiny_adata_csr.n_obs
     assert np.allclose(v1, v2)

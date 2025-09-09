@@ -14,5 +14,5 @@ def test_find_doublets_basic_runs(tiny_ad, yaml_paths):
     a.obs["B_score"] = col("MS4A1")
     a.obs["Myeloid_score"] = col("LYZ")
     info = tt.find_doublets(a, tree_yaml=tree, markers_yaml=markers, root="root")
-    assert {"doublet_score", "cell#1", "cell#2"} <= set(a.obs.columns)
+    assert {"mismatch_score", "cell#1", "cell#2"} <= set(a.obs.columns)
     assert isinstance(info, dict)
