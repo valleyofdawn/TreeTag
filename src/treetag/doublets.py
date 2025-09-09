@@ -95,7 +95,7 @@ def find_doublets(
     top2 = np.array(families, dtype=object)[second_idx]
 
     if write_cols:
-        adata.obs["doublet_score"] = score
+        adata.obs["mismatch_score"] = score
         adata.obs["cell#1"] = pd.Categorical(top1, categories=families)
         adata.obs["cell#2"] = pd.Categorical(top2, categories=families)
 
