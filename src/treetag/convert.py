@@ -8,20 +8,26 @@ def convert(
     prefer_var_cols: Sequence[str] = ("feature_name", "gene_symbols", "SYMBOL"),
 ):
     """
-    Minimal converter.
+    Minimal converter with index/column collision guards.
 
-    - If a symbol column exists in `adata.var` (e.g. 'feature_name'), use it to set `adata.var_names`.
-    - Stores originals in `adata.var['original_gene']` and, when shapes match, in `adata.raw.var['original_gene']`.
-    - If no such column exists:
-        * If var_names look like Ensembl IDs -> raise with an instruction to install gprofiler and convert.
-        * Otherwise assume var_names are already symbols and do nothing.
-
-    Returns: dict with {'changed': int, 'used': str} where used is the column name or 'none'.
+    Returns: {'changed': int, 'used': str}
     """
     import numpy as np
     import pandas as pd
 
-    # ---- use existing symbol column, if present ----
+    def _disarm_index_column_collision(df: "pd.DataFrame") -> None:
+        """If df.index.name matches a column with different values, rename that column."""
+        idxn = df.index.name
+        if idxn is not None and idxn in df.columns:
+            # compare as strings for robustness
+            col_vals = df[idxn].astype(str)
+            idx_vals = pd.Index(df.index.astype(str))
+            if not idx_vals.equals(pd.Index(col_vals)):
+                df.rename(columns={idxn: f"{idxn}_orig"}, inplace=True)
+
+    # Preempt collision on current .var
+    _disarm_index_column_collision(adata.var)
+
     for col in prefer_var_cols:
         if col in adata.var.columns:
             vals = adata.var[col].astype(str)
@@ -29,12 +35,14 @@ def convert(
             if vals.notna().mean() >= 0.5 and vals.nunique() > 10:
                 orig = adata.var_names.astype(str)
 
-                # rename source column first to avoid index/column clashes
+                # rename source column first to avoid column re-use
                 adata.var.rename(columns={col: f"{col}_orig"}, inplace=True)
                 adata.var["original_gene"] = orig
 
-                adata.var_names = vals
-                adata.var_names_make_unique()
+                # set new var_names with name=None to avoid future collisions
+                new_index = pd.Index(vals.values, name=None)
+                adata.var_names = new_index
+                adata.var.index.name = None  # belt-and-suspenders
 
                 # best-effort sync of .raw (only if same number of vars)
                 if (
@@ -42,8 +50,10 @@ def convert(
                     and getattr(adata.raw, "n_vars", None) == adata.n_vars
                 ):
                     try:
-                        adata.raw.var["original_gene"] = adata.raw.var_names.astype(str)
-                        adata.raw.var.index = adata.var_names
+                        rv = adata.raw.var
+                        _disarm_index_column_collision(rv)  # guard raw.var too
+                        rv["original_gene"] = adata.raw.var_names.astype(str)
+                        rv.index = pd.Index(adata.var_names, name=None)
                     except Exception:
                         pass
 
@@ -51,6 +61,8 @@ def convert(
                 return {"changed": changed, "used": col}
 
     # ---- no column: decide whether to error or leave as-is ----
+    import pandas as pd
+
     vn = pd.Index(adata.var_names.astype(str))
     looks_ensembl = vn.str.startswith(("ENSG", "ENSMUSG", "ENSDARG")).mean() > 0.5
 
@@ -58,9 +70,7 @@ def convert(
         raise RuntimeError(
             "No symbol column found in `adata.var`, and gene IDs look like Ensembl. "
             "Please install gprofiler-official and perform ID conversion to gene symbols "
-            "before running TreeTag. Example:\n"
-            "    pip install gprofiler-official\n"
-            "    # then run your own conversion step using g:Profiler\n"
+            "before running TreeTag."
         )
 
     # assume var_names are already symbols; do nothing
